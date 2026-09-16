@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickMart Retail</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7f6;color:#17211b}
+header{background:#146b45;color:white;padding:16px 5%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.logo{font-size:23px;font-weight:800}.cart{background:white;color:#146b45;border:0;padding:10px 16px;border-radius:20px;font-weight:bold;cursor:pointer}
+.hero{padding:35px 5%;background:linear-gradient(120deg,#dff5e9,#fff);display:flex;justify-content:space-between;gap:20px;align-items:center}
+.hero h1{font-size:38px;margin:0 0 10px}.hero p{color:#52635a}.search{width:min(500px,100%);padding:14px;border:1px solid #ccd6d0;border-radius:12px;font-size:16px}
+main{padding:25px 5%}.cats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}.cat{border:1px solid #ccd6d0;background:white;padding:10px 15px;border-radius:22px;cursor:pointer}.cat.active{background:#146b45;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}.card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #0000000d}.pic{height:155px;background:#e8eee9;display:flex;align-items:center;justify-content:center;font-size:54px}.info{padding:15px}.info h3{margin:0 0 7px}.price{font-weight:800;font-size:19px}.stock{font-size:12px;color:#68756e}.add{width:100%;margin-top:12px;padding:11px;border:0;border-radius:9px;background:#146b45;color:white;font-weight:bold;cursor:pointer}
+.panel{display:none;position:fixed;inset:0;background:#0008;z-index:10}.modal{background:white;width:min(560px,94%);max-height:92vh;overflow:auto;margin:4vh auto;border-radius:18px;padding:22px}.close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.field{margin:12px 0}.field label{display:block;font-weight:bold;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #ccd6d0;border-radius:9px}.loc{background:#eef8f2;padding:12px;border-radius:10px;font-size:14px}.checkout{width:100%;padding:14px;background:#146b45;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:10px}
+.admin{margin-top:30px;background:#17211b;color:white;border-radius:16px;padding:20px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}.stat{background:#26352d;padding:15px;border-radius:12px}.stat b{display:block;font-size:24px;margin-top:5px}
+.toast{position:fixed;bottom:20px;right:20px;background:#17211b;color:white;padding:13px 18px;border-radius:10px;display:none;z-index:20}
+</style>
+</head>
+<body>
+<header><div class="logo">🛒 QuickMart Retail</div><button class="cart" onclick="openCart()">Cart (<span id="count">0</span>)</button></header>
+<section class="hero">
+<div><h1>Everyday essentials, delivered.</h1><p>Fast-moving products from your local retail shop.</p>
+<input class="search" id="search" placeholder="Search products..." oninput="render()"></div>
+<div style="font-size:90px">🛍️</div>
+</section>
+<main>
+<h2>Shop by category</h2><div class="cats" id="cats"></div>
+<h2>Popular products</h2><div class="grid" id="products"></div>
+<section class="admin"><h2>Owner Dashboard — Demo</h2><div class="stats">
+<div class="stat">Today's Sales<b>KSh 84,500</b></div><div class="stat">Orders<b id="orders">37</b></div><div class="stat">Products<b>426</b></div><div class="stat">Top Area<b>Kasarani</b></div>
+</div><p>📍 Sales can be analyzed by customer delivery area after orders are placed.</p></section>
+</main>
+
+<div class="panel" id="panel"><div class="modal"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><h3>Total: KSh <span id="total">0</span></h3>
+<div class="field"><label>Full name</label><input id="name" placeholder="Customer name"></div>
+<div class="field"><label>Phone number</label><input id="phone" placeholder="07XXXXXXXX"></div>
+<div class="field"><label>Delivery area</label><select id="area"><option>Kasarani</option><option>Roysambu</option><option>Westlands</option><option>Kilimani</option><option>Embakasi</option><option>Nairobi CBD</option><option>Other</option></select></div>
+<div class="field"><label>Specific location</label><input id="location" placeholder="Estate, street, building/landmark"></div>
+<div class="loc">📍 Location recorded as your selected delivery area. Exact GPS is optional in this prototype.</div>
+<button class="checkout" onclick="placeOrder()">Place Order</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const products=[
+["Cooking Oil 5L","Groceries",1150,"🫗",18],["Sugar 2kg","Groceries",320,"🍚",40],["Milk 500ml","Dairy",70,"🥛",55],
+["Bread","Bakery",80,"🍞",31],["Laundry Detergent 1kg","Household",280,"🧺",22],["Bathing Soap","Personal Care",120,"🧼",48],
+["Toothpaste","Personal Care",180,"🪥",26],["Tissue 10 Pack","Household",350,"🧻",15],["Drinking Water 1L","Beverages",60,"💧",70],
+["Soda 500ml","Beverages",80,"🥤",60],["Shampoo","Personal Care",250,"🧴",20],["Biscuits","Snacks",100,"🍪",45]
+];
+let category="All",cart=[];
+function renderCats(){let cats=["All",...new Set(products.map(p=>p[1]))];document.getElementById("cats").innerHTML=cats.map(c=>`<button class="cat ${c==category?'active':''}" onclick="category='${c}';render()">${c}</button>`).join("")}
+function render(){renderCats();let q=document.getElementById("search").value.toLowerCase();let list=products.filter(p=>(category=="All"||p[1]==category)&&p[0].toLowerCase().includes(q));document.getElementById("products").innerHTML=list.map((p,i)=>`<div class="card"><div class="pic">${p[3]}</div><div class="info"><h3>${p[0]}</h3><div class="stock">${p[1]} · ${p[4]} in stock</div><p class="price">KSh ${p[2].toLocaleString()}</p><button class="add" onclick="add(${products.indexOf(p)})">Add to Cart</button></div></div>`).join("")}
+function add(i){cart.push(products[i]);update();toast(products[i][0]+" added to cart")}
+function update(){document.getElementById("count").textContent=cart.length}
+function openCart(){document.getElementById("panel").style.display="block";let el=document.getElementById("cartItems");let groups={};cart.forEach(p=>groups[p[0]]=(groups[p[0]]||0)+1);el.innerHTML=Object.entries(groups).map(([n,q])=>{let p=products.find(x=>x[0]==n);return `<div class="row"><span>${n} × ${q}</span><b>KSh ${(p[2]*q).toLocaleString()}</b></div>`}).join("")||"<p>Your cart is empty.</p>";document.getElementById("total").textContent=cart.reduce((s,p)=>s+p[2],0).toLocaleString()}
+function closeCart(){document.getElementById("panel").style.display="none"}
+function placeOrder(){if(!cart.length)return toast("Add a product first");let n=document.getElementById("name").value.trim(),ph=document.getElementById("phone").value.trim();if(!n||!ph)return toast("Enter your name and phone number");let area=document.getElementById("area").value;let order=Math.floor(1000+Math.random()*9000);document.getElementById("orders").textContent=parseInt(document.getElementById("orders").textContent)+1;cart=[];update();closeCart();toast("Order #"+order+" placed — "+area);setTimeout(()=>alert("Order #"+order+" confirmed!\\nDelivery area: "+area+"\\nThank you, "+n+"."),250)}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",2200)}
+render();
+</script>
+</body></html>
